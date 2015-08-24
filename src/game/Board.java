@@ -12,12 +12,10 @@ import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
-public class Board extends JPanel implements ActionListener {
+public class Board extends JPanel implements Runnable {
 
 	private final int B_WIDTH = 300;
 	private final int B_HEIGHT = 300;
@@ -39,10 +37,10 @@ public class Board extends JPanel implements ActionListener {
 	private boolean downDirection = false;
 	private boolean inGame = true;
 
-	private Timer timer;
 	private Image ball;
 	private Image apple;
 	private Image head;
+	private Thread gameThread;
 
 	public Board() {
 		addKeyListener(new TAdapter());
@@ -51,6 +49,7 @@ public class Board extends JPanel implements ActionListener {
 
 		setPreferredSize(new Dimension(B_WIDTH, B_HEIGHT));
 		loadImages();
+		gameThread = new Thread(this);
 		initGame();
 
 	}
@@ -77,9 +76,7 @@ public class Board extends JPanel implements ActionListener {
 		}
 
 		locateApple();
-
-		timer = new Timer(DELAY, this);
-		timer.start();
+		gameThread.start();
 	}
 
 	@Override
@@ -164,9 +161,6 @@ public class Board extends JPanel implements ActionListener {
 		if (y[0] < 0 || x[0] < 0) {
 			inGame = false;
 		}
-		if (!inGame) {
-			timer.stop();
-		}
 	}
 
 	private void locateApple() {
@@ -176,17 +170,6 @@ public class Board extends JPanel implements ActionListener {
 		apple_y = r * DOT_SIZE;
 	}
 
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		if (inGame) {
-			checkApple();
-			checkCollision();
-			move();
-		}
-
-		repaint();
-
-	}
 
 	private class TAdapter extends KeyAdapter {
 		@Override
@@ -218,5 +201,23 @@ public class Board extends JPanel implements ActionListener {
 			}
 		}
 
+	}
+
+	@Override
+	public void run() {
+		while (inGame) {
+			checkApple();
+			checkCollision();
+			move();
+			try {
+				Thread.sleep(DELAY);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			repaint();
+		}
+		
+		
 	}
 }
